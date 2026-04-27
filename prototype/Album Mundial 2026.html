@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Álbum Mundial 2026 — Figus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body, #root { height: 100%; margin: 0; }
+  body { background: #f0eee9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  *, *::before, *::after { box-sizing: border-box; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="app-state.jsx"></script>
+  <script type="text/babel" src="variant-b.jsx"></script>
+
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "currentUser": "martin",
+      "density": "regular",
+      "showFrames": true
+    }/*EDITMODE-END*/;
+
+    function PhoneFrame({ children, showFrame }) {
+      if (!showFrame) {
+        return (
+          <div style={{
+            width: 380, height: 800, borderRadius: 24, overflow: 'hidden',
+            background: '#fff', position: 'relative',
+            boxShadow: '0 30px 60px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.08)',
+          }}>
+            {children}
+          </div>
+        );
+      }
+      return (
+        <IOSDevice width={380} height={800}>
+          <div style={{ position: 'absolute', inset: 0 }}>{children}</div>
+        </IOSDevice>
+      );
+    }
+
+    function App() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      return (
+        <>
+          <DesignCanvas>
+            <DCSection id="variant" title="Álbum Mundial 2026" subtitle="Variante retro · prototipo navegable">
+              <DCArtboard id="b" label="Álbum retro" width={380} height={800}>
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <PhoneFrame showFrame={t.showFrames}>
+                    <VariantB currentUserId={t.currentUser} density={t.density} />
+                  </PhoneFrame>
+                </div>
+              </DCArtboard>
+              <DCPostIt top={-40} right={-220} rotate={2} width={210}>
+                Tocá una figurita y usá +/− del teclado para sumar o restar. Las secciones se abren y cierran con un toque.
+              </DCPostIt>
+            </DCSection>
+          </DesignCanvas>
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection label="Usuario actual" />
+            <TweakSelect label="Yo soy" value={t.currentUser}
+              options={USERS.map(u => ({ value: u.id, label: u.name }))}
+              onChange={(v) => setTweak('currentUser', v)} />
+
+            <TweakSection label="Vista" />
+            <TweakRadio label="Densidad" value={t.density}
+              options={['compact', 'regular', 'large']}
+              onChange={(v) => setTweak('density', v)} />
+            <TweakToggle label="Marco iPhone" value={t.showFrames}
+              onChange={(v) => setTweak('showFrames', v)} />
+
+            <TweakSection label="Datos mock" />
+            <TweakButton label="Reiniciar mi colección" secondary
+              onClick={() => {
+                USERS.forEach(u => {
+                  try { localStorage.removeItem(`mundial26_collection_${u.id}`); } catch (e) {}
+                });
+                window.location.reload();
+              }} />
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
