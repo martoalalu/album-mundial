@@ -2,33 +2,34 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { T } from '@/lib/tokens';
 
-export default function LoginScreen({ error }: { error?: string }) {
+export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [formError, setFormError] = useState(error ?? '');
+  const [error, setError] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password.trim()) return;
     setLoading(true);
-    setFormError('');
+    setError('');
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      password,
     });
 
     setLoading(false);
     if (error) {
-      setFormError('Algo salió mal. Intentá de nuevo.');
+      setError('Mail o contraseña incorrectos.');
     } else {
-      setSent(true);
+      router.push('/album');
+      router.refresh();
     }
   }
 
@@ -69,70 +70,62 @@ export default function LoginScreen({ error }: { error?: string }) {
         </div>
       </div>
 
-      {!sent ? (
-        <>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, marginBottom: 4 }}>
-              ¡Hola, coleccionista!
-            </div>
-            <div style={{ fontSize: 14, color: T.inkDim }}>
-              Ingresá tu mail y te mandamos el link para entrar.
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
-                Email
-              </span>
-              <input
-                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="tumail@ejemplo.com" required autoComplete="email"
-                style={{
-                  height: 48, padding: '0 14px',
-                  border: `1.5px solid ${T.ink}`, background: T.surface,
-                  borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
-                }}
-              />
-            </label>
-
-            {formError && (
-              <div style={{ fontSize: 13, color: T.accent, fontFamily: T.fontMono, letterSpacing: '0.4px' }}>
-                {formError}
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} style={{
-              marginTop: 10, height: 54,
-              border: `1.5px solid ${T.ink}`,
-              background: loading ? T.inkDim : T.accent, color: '#fff',
-              borderRadius: 10, fontSize: 16, fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: `3px 3px 0 ${T.ink}`,
-              transition: 'background .15s',
-            }}>
-              {loading ? 'Enviando...' : 'Mandarme el link →'}
-            </button>
-          </form>
-        </>
-      ) : (
-        <div style={{
-          background: T.okSoft, border: `1.5px solid ${T.ok}`,
-          borderRadius: 14, padding: '24px 20px',
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, color: T.ok }}>
-            ¡Revisá tu mail!
-          </div>
-          <div style={{ fontSize: 14, color: T.inkDim, lineHeight: 1.6 }}>
-            Te mandamos un link a <strong>{email}</strong>. Buscá el mail con asunto <strong>"Confirm Your Signup"</strong> — lo manda Supabase, no es spam.
-          </div>
-          <button onClick={() => setSent(false)}
-            style={{ marginTop: 4, fontSize: 13, color: T.inkDim, background: 'none', border: 'none', textAlign: 'left', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>
-            Usar otro email
-          </button>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, marginBottom: 4 }}>
+          ¡Hola, coleccionista!
         </div>
-      )}
+        <div style={{ fontSize: 14, color: T.inkDim }}>
+          Ingresá con el mail y la contraseña que te pasaron.
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
+            Email
+          </span>
+          <input
+            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="tumail@ejemplo.com" required autoComplete="email"
+            style={{
+              height: 48, padding: '0 14px',
+              border: `1.5px solid ${T.ink}`, background: T.surface,
+              borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
+            }}
+          />
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
+            Contraseña
+          </span>
+          <input
+            type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            required autoComplete="current-password"
+            style={{
+              height: 48, padding: '0 14px',
+              border: `1.5px solid ${T.ink}`, background: T.surface,
+              borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
+            }}
+          />
+        </label>
+
+        {error && (
+          <div style={{ fontSize: 13, color: T.accent, fontFamily: T.fontMono, letterSpacing: '0.4px' }}>
+            {error}
+          </div>
+        )}
+
+        <button type="submit" disabled={loading} style={{
+          marginTop: 10, height: 54,
+          border: `1.5px solid ${T.ink}`,
+          background: loading ? T.inkDim : T.accent, color: '#fff',
+          borderRadius: 10, fontSize: 16, fontWeight: 700,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: `3px 3px 0 ${T.ink}`,
+        }}>
+          {loading ? 'Entrando...' : 'Entrar →'}
+        </button>
+      </form>
 
       <div style={{ flex: 1 }} />
       <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkSoft, letterSpacing: '1.2px', marginTop: 32, textAlign: 'center' }}>
