@@ -29,10 +29,10 @@ function Header({ owned, total, displayName }: { owned: number; total: number; d
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontFamily: T.fontMono, fontSize: 9, letterSpacing: '1.6px', opacity: 0.6, marginBottom: 4 }}>
-              MUNDIAL · USA · MEX · CAN
+              MUNDIAL 2026
             </div>
             <div style={{ fontFamily: T.font, fontSize: 30, fontWeight: 800, letterSpacing: -1, lineHeight: 1 }}>
-              {displayName.toUpperCase()}
+              Álbum de {displayName.charAt(0).toUpperCase() + displayName.slice(1)}
             </div>
           </div>
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
