@@ -125,7 +125,7 @@ export default function LoginScreen({ error }: { error?: string }) {
             ¡Revisá tu mail!
           </div>
           <div style={{ fontSize: 14, color: T.inkDim, lineHeight: 1.6 }}>
-            Te mandamos un link a <strong>{email}</strong>. Hacé click para entrar al álbum.
+            Te mandamos un link a <strong>{email}</strong>. Buscá el mail con asunto <strong>"Confirm Your Signup"</strong> — lo manda Supabase, no es spam.
           </div>
           <button onClick={() => setSent(false)}
             style={{ marginTop: 4, fontSize: 13, color: T.inkDim, background: 'none', border: 'none', textAlign: 'left', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>

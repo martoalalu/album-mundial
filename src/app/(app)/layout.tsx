@@ -4,19 +4,27 @@ import { CollectionProvider } from '@/lib/store';
 import BottomNav from '@/components/BottomNav';
 import { T, GRAIN } from '@/lib/tokens';
 
+const GENERAL_GROUP_ID = '00000000-0000-0000-0000-000000000001';
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect('/login');
 
-  const { data: membership } = await supabase
+  let { data: membership } = await supabase
     .from('group_members')
     .select('group_id')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!membership) redirect('/grupo');
+  // Si no está en ningún grupo, lo agrega al General automáticamente
+  if (!membership) {
+    await supabase
+      .from('group_members')
+      .insert({ group_id: GENERAL_GROUP_ID, user_id: user.id });
+    membership = { group_id: GENERAL_GROUP_ID };
+  }
 
   return (
     <CollectionProvider userId={user.id} groupId={membership.group_id}>
