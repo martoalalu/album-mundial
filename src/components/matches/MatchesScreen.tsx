@@ -125,11 +125,14 @@ export default function MatchesScreen() {
       if (group) setInviteCode(group.invite_code);
 
       // Obtener otros miembros del grupo
-      const { data: memberRows } = await supabase
+      const { data: memberRows, error: memberError } = await supabase
         .from('group_members')
         .select('user_id')
         .eq('group_id', groupId)
         .neq('user_id', userId);
+
+      console.log('groupId:', groupId, 'userId:', userId);
+      console.log('memberRows:', memberRows, 'error:', memberError);
 
       if (!memberRows?.length) { setLoading(false); return; }
 
