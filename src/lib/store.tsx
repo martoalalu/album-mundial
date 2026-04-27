@@ -11,6 +11,7 @@ type CollectionCtx = {
   hydrated: boolean;
   userId: string;
   groupId: string;
+  displayName: string;
 };
 
 const Ctx = createContext<CollectionCtx | null>(null);
@@ -19,10 +20,12 @@ export function CollectionProvider({
   children,
   userId,
   groupId,
+  displayName,
 }: {
   children: React.ReactNode;
   userId: string;
   groupId: string;
+  displayName: string;
 }) {
   const [collection, setCollection] = useState<Collection>({});
   const [hydrated, setHydrated] = useState(false);
@@ -66,7 +69,7 @@ export function CollectionProvider({
   }, [userId]);
 
   return (
-    <Ctx.Provider value={{ collection, inc, dec, hydrated, userId, groupId }}>
+    <Ctx.Provider value={{ collection, inc, dec, hydrated, userId, groupId, displayName }}>
       {children}
     </Ctx.Provider>
   );

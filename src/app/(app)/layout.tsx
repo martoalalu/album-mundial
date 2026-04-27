@@ -12,6 +12,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/login');
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single();
+
   let { data: membership } = await supabase
     .from('group_members')
     .select('group_id')
@@ -27,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <CollectionProvider userId={user.id} groupId={membership.group_id}>
+    <CollectionProvider userId={user.id} groupId={membership.group_id} displayName={profile?.display_name ?? user.email?.split('@')[0] ?? 'Vos'}>
       <div style={{
         height: '100%', display: 'flex', flexDirection: 'column',
         background: T.bg, backgroundImage: GRAIN,

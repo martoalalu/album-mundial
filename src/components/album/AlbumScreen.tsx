@@ -1,14 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCollection } from '@/lib/store';
 import { computeStats, FilterType } from '@/lib/match';
 import { SECTIONS, STICKERS, Sticker } from '@/lib/stickers';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { T } from '@/lib/tokens';
 
 // ─── Header ──────────────────────────────────────────────────────────────────
-function Header({ owned, total }: { owned: number; total: number }) {
+function Header({ owned, total, displayName }: { owned: number; total: number; displayName: string }) {
+  const router = useRouter();
   const pct = Math.round((owned / total) * 100);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  }
+
   return (
     <div style={{ background: T.bg, position: 'sticky', top: 0, zIndex: 30 }}>
       <div style={{
@@ -21,14 +32,19 @@ function Header({ owned, total }: { owned: number; total: number }) {
               MUNDIAL · USA · MEX · CAN
             </div>
             <div style={{ fontFamily: T.font, fontSize: 30, fontWeight: 800, letterSpacing: -1, lineHeight: 1 }}>
-              MI ÁLBUM
+              {displayName.toUpperCase()}
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <button onClick={handleLogout} style={{
+              background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)',
+              color: 'rgba(255,255,255,.45)', borderRadius: 6, padding: '3px 8px',
+              fontFamily: T.fontMono, fontSize: 9, letterSpacing: '1px', cursor: 'pointer',
+            }}>SALIR</button>
             <div style={{ fontFamily: T.fontMono, fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px', color: T.accent }}>
               {owned}<span style={{ opacity: 0.5, color: T.paper }}>/{total}</span>
             </div>
-            <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2, fontFamily: T.fontMono, letterSpacing: '0.6px' }}>
+            <div style={{ fontSize: 10, opacity: 0.7, fontFamily: T.fontMono, letterSpacing: '0.6px' }}>
               {pct}% LLENO
             </div>
           </div>
@@ -151,7 +167,7 @@ function StickerCard({
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AlbumScreen() {
-  const { collection, inc, dec } = useCollection();
+  const { collection, inc, dec, displayName } = useCollection();
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [focused, setFocused] = useState<number | null>(null);
@@ -214,7 +230,7 @@ export default function AlbumScreen() {
 
   return (
     <div style={{ height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-      <Header owned={stats.pegadas} total={stats.total} />
+      <Header owned={stats.pegadas} total={stats.total} displayName={displayName} />
 
       {/* Search */}
       <div style={{ padding: '0 16px 10px', position: 'sticky', top: 88, background: T.bg, zIndex: 25 }}>
