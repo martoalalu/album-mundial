@@ -194,17 +194,8 @@ export default function MatchesScreen() {
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
               Todavía estás solo en el grupo
             </div>
-            <div style={{ fontSize: 13, color: T.inkDim, marginBottom: 16, lineHeight: 1.5 }}>
-              Compartí este código con tus amigos para que se sumen:
-            </div>
-            <div style={{
-              fontFamily: T.fontMono, fontSize: 28, fontWeight: 800, letterSpacing: 8,
-              background: T.ink, color: T.paper,
-              padding: '14px 20px', borderRadius: 10,
-              border: `1.5px solid ${T.ink}`, boxShadow: `3px 3px 0 ${T.accent}`,
-              display: 'inline-block',
-            }}>
-              {inviteCode}
+            <div style={{ fontSize: 13, color: T.inkDim, lineHeight: 1.5 }}>
+              Cuando tus amigos se sumen, acá vas a ver con quién podés cambiar figuritas.
             </div>
           </div>
         ) : (
