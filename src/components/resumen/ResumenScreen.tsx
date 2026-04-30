@@ -176,7 +176,7 @@ export default function ResumenScreen() {
                         fontFamily: T.fontMono, fontSize: 11, fontWeight: 700,
                         padding: '3px 7px', color: T.ink,
                         border: `1.5px dashed ${T.line}`, borderRadius: 4,
-                      }}>{s.n}</span>
+                      }}>{s.displayN}</span>
                     ))}
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export default function ResumenScreen() {
                   borderTop: i === 0 ? 'none' : `1px dashed ${T.line}`,
                 }}>
                   <span style={{ fontSize: 18, flexShrink: 0 }}>{t.sectionFlag}</span>
-                  <div style={{ fontFamily: T.font, fontWeight: 800, fontSize: 18, width: 48, flexShrink: 0 }}>{t.n}</div>
+                  <div style={{ fontFamily: T.fontMono, fontWeight: 800, fontSize: 14, width: 52, flexShrink: 0 }}>{t.displayN}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {t.label}

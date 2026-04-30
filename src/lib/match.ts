@@ -11,8 +11,8 @@ export type Stats = {
 };
 
 export type MatchResult = {
-  iGive: { n: number; label: string }[];
-  iGet: { n: number; label: string }[];
+  iGive: { n: number; displayN: string; label: string }[];
+  iGet: { n: number; displayN: string; label: string }[];
   swaps: number;
 };
 
@@ -50,8 +50,8 @@ export function computeMatch(
   for (const s of STICKERS) {
     const mine = myCollection[s.n] ?? 0;
     const theirs = theirCollection[s.n] ?? 0;
-    if (mine >= 2 && theirs === 0) iGive.push({ n: s.n, label: s.label });
-    if (theirs >= 2 && mine === 0) iGet.push({ n: s.n, label: s.label });
+    if (mine >= 2 && theirs === 0) iGive.push({ n: s.n, displayN: s.displayN, label: s.label });
+    if (theirs >= 2 && mine === 0) iGet.push({ n: s.n, displayN: s.displayN, label: s.label });
   }
 
   return { iGive, iGet, swaps: Math.min(iGive.length, iGet.length) };

@@ -2,6 +2,7 @@ export type StickerKind = "team" | "general";
 
 export type Sticker = {
   n: number;
+  displayN: string; // e.g. "ARG-1", "GEN-3"
   sectionId: string;
   sectionName: string;
   sectionColor: string;
@@ -98,6 +99,7 @@ function buildStickers(): Sticker[] {
         i === 0 ? "Escudo" : i === 1 ? "Foto grupal" : `Jugador ${i - 1}`;
       list.push({
         n,
+        displayN: `${team.code}-${i + 1}`,
         sectionId: team.code,
         sectionName: team.name,
         sectionColor: team.color,
@@ -115,6 +117,7 @@ function buildStickers(): Sticker[] {
   for (let i = 0; i < 20; i++) {
     list.push({
       n,
+      displayN: `GEN-${i + 1}`,
       sectionId: "GEN",
       sectionName: "General",
       sectionColor: "#D4AF37",

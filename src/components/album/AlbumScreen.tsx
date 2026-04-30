@@ -167,9 +167,9 @@ function StickerCard({
           {s.sectionFlag}
         </span>
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: T.font, fontSize: 22, fontWeight: 800, color: has ? T.ink : T.inkSoft, letterSpacing: -1, lineHeight: 1 }}>
-          {s.n}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>
+        <span style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 800, color: has ? T.ink : T.inkSoft, letterSpacing: -0.5, lineHeight: 1, textAlign: 'center' }}>
+          {s.displayN}
         </span>
       </div>
       <div style={{
@@ -206,11 +206,9 @@ export default function AlbumScreen() {
   const [viewMode, setViewMode] = useState<'alpha' | 'group'>('alpha');
   const [lastTouched, setLastTouched] = useState<number | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
-    const s = new Set<string>();
-    SECTIONS.slice(1).forEach((sec) => s.add(sec.id));
-    return s;
-  });
+  const [collapsed, setCollapsed] = useState<Set<string>>(() =>
+    new Set(SECTIONS.map((sec) => sec.id))
+  );
 
   const stats = useMemo(() => computeStats(collection), [collection]);
 
@@ -238,7 +236,9 @@ export default function AlbumScreen() {
       if (filter === 'missing') items = items.filter((s) => (collection[s.n] ?? 0) === 0);
       if (filter === 'dupes')   items = items.filter((s) => (collection[s.n] ?? 0) >= 2);
       if (q) items = items.filter((s) =>
-        String(s.n).includes(q) || s.sectionId.toLowerCase().includes(q) || s.sectionName.toLowerCase().includes(q)
+        s.displayN.toLowerCase().includes(q) ||
+        s.sectionId.toLowerCase().includes(q) ||
+        s.sectionName.toLowerCase().includes(q)
       );
       return { ...sec, items };
     }).filter((sec) => sec.items.length > 0);
@@ -446,10 +446,10 @@ export default function AlbumScreen() {
             <div style={{
               width: 40, height: 40, borderRadius: 8, background: s.sectionColor,
               border: `1.5px solid ${T.paper}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: T.font, fontWeight: 800, fontSize: 15, color: '#fff',
+              fontFamily: T.fontMono, fontWeight: 800, fontSize: 12, color: '#fff',
               textShadow: '0 1px 2px rgba(0,0,0,.4)', flexShrink: 0,
             }}>
-              {lastTouched}
+              {s.displayN}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

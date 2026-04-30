@@ -73,7 +73,7 @@ function MatchCard({ match }: { match: FullMatch }) {
                   fontFamily: T.fontMono, fontSize: 11, fontWeight: 700,
                   padding: '3px 7px', background: T.surface, color: T.ink,
                   border: `1px solid ${T.ink}`, borderRadius: 4,
-                }}>{g.n}</span>
+                }}>{g.displayN}</span>
               ))}
               {iGive.length > 24 && (
                 <span style={{ fontFamily: T.fontMono, fontSize: 11, color: T.inkDim, padding: '3px 7px', fontWeight: 700 }}>
@@ -91,7 +91,7 @@ function MatchCard({ match }: { match: FullMatch }) {
                 <span key={g.n} style={{
                   fontFamily: T.fontMono, fontSize: 11, fontWeight: 700,
                   padding: '3px 7px', background: T.accent, color: '#fff', borderRadius: 4,
-                }}>{g.n}</span>
+                }}>{g.displayN}</span>
               ))}
               {iGet.length > 24 && (
                 <span style={{ fontFamily: T.fontMono, fontSize: 11, color: T.accent, padding: '3px 7px', fontWeight: 700 }}>
