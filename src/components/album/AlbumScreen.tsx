@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCollection } from '@/lib/store';
 import { computeStats, FilterType } from '@/lib/match';
 import { SECTIONS, STICKERS, Sticker } from '@/lib/stickers';
@@ -108,24 +108,57 @@ function FilterPills({
 
 // ─── Sticker card ─────────────────────────────────────────────────────────────
 function StickerCard({
-  s, count, focused, onFocus,
+  s, count, onInc, onDec, onTouch,
 }: {
-  s: Sticker; count: number; focused: boolean; onFocus: () => void;
+  s: Sticker; count: number;
+  onInc: () => void; onDec: () => void; onTouch: () => void;
 }) {
   const has = count >= 1;
   const dupe = count >= 2;
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+  const [pressing, setPressing] = useState(false);
+
+  function handlePointerDown(e: React.PointerEvent) {
+    e.preventDefault();
+    didLongPress.current = false;
+    setPressing(true);
+    pressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      setPressing(false);
+      onDec();
+      onTouch();
+    }, 500);
+  }
+
+  function handlePointerUp() {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    setPressing(false);
+  }
+
+  function handleClick() {
+    if (didLongPress.current) return;
+    onInc();
+    onTouch();
+  }
+
   return (
-    <div onClick={onFocus} style={{
-      position: 'relative', width: 70, height: 96,
-      background: has ? T.surface : 'transparent',
-      border: `1.5px ${has ? 'solid' : 'dashed'} ${focused ? T.accent : (has ? T.ink : T.line)}`,
-      borderRadius: 8,
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      cursor: 'pointer', userSelect: 'none',
-      boxShadow: has ? `2px 2px 0 ${focused ? T.accent : T.line}` : 'none',
-      transform: focused ? 'translate(-1px,-1px)' : 'none',
-      transition: 'transform .1s, box-shadow .1s, border-color .1s',
-    }}>
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      onClick={handleClick}
+      style={{
+        position: 'relative', width: 70, height: 96,
+        background: has ? T.surface : 'transparent',
+        border: `1.5px ${has ? 'solid' : 'dashed'} ${pressing ? T.accent : (has ? T.ink : T.line)}`,
+        borderRadius: 8,
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        cursor: 'pointer', userSelect: 'none',
+        boxShadow: has ? `2px 2px 0 ${pressing ? T.accent : T.line}` : 'none',
+        transform: pressing ? 'translate(-1px,-1px) scale(0.97)' : 'none',
+        transition: 'transform .1s, box-shadow .1s, border-color .1s',
+      }}>
       <div style={{
         height: 14, background: has ? s.sectionColor : 'transparent', opacity: has ? 1 : 0.25,
         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4,
@@ -170,7 +203,8 @@ export default function AlbumScreen() {
   const { collection, inc, dec, displayName } = useCollection();
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
-  const [focused, setFocused] = useState<number | null>(null);
+  const [lastTouched, setLastTouched] = useState<number | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     const s = new Set<string>();
     SECTIONS.slice(1).forEach((sec) => s.add(sec.id));
@@ -189,17 +223,11 @@ export default function AlbumScreen() {
 
   const allCollapsed = SECTIONS.every((s) => collapsed.has(s.id));
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!focused || (e.target as HTMLElement).tagName === 'INPUT') return;
-      if (e.key === '+' || e.key === '=') { e.preventDefault(); inc(focused); }
-      else if (e.key === '-' || e.key === '_') { e.preventDefault(); dec(focused); }
-      else if (e.key === 'Escape') setFocused(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [focused, inc, dec]);
+  const handleTouch = useCallback((n: number) => {
+    setLastTouched(n);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setLastTouched(null), 2000);
+  }, []);
 
   const filteredSections = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -342,7 +370,9 @@ export default function AlbumScreen() {
                   {sec.items.map((s) => (
                     <StickerCard
                       key={s.n} s={s} count={collection[s.n] ?? 0}
-                      focused={focused === s.n} onFocus={() => setFocused(s.n)}
+                      onInc={() => inc(s.n)}
+                      onDec={() => dec(s.n)}
+                      onTouch={() => handleTouch(s.n)}
                     />
                   ))}
                 </div>
@@ -352,43 +382,35 @@ export default function AlbumScreen() {
         })}
       </div>
 
-      {/* Focused sticker bar */}
-      {focused && (() => {
-        const s = STICKERS[focused - 1];
-        const c = collection[focused] ?? 0;
+      {/* Info bar — aparece 2s después del último tap */}
+      {lastTouched && (() => {
+        const s = STICKERS[lastTouched - 1];
+        const c = collection[lastTouched] ?? 0;
         return (
           <div style={{
             position: 'sticky', bottom: 8, margin: '0 12px 8px',
             background: T.ink, color: T.paper,
-            borderRadius: 14, padding: 10, display: 'flex', alignItems: 'center', gap: 10,
+            borderRadius: 14, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
             border: `1.5px solid ${T.ink}`, boxShadow: `4px 4px 0 ${T.accent}`,
           }}>
             <div style={{
-              width: 46, height: 46, borderRadius: 8, background: s.sectionColor,
+              width: 40, height: 40, borderRadius: 8, background: s.sectionColor,
               border: `1.5px solid ${T.paper}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: T.font, fontWeight: 800, fontSize: 16, color: '#fff',
+              fontFamily: T.font, fontWeight: 800, fontSize: 15, color: '#fff',
               textShadow: '0 1px 2px rgba(0,0,0,.4)', flexShrink: 0,
             }}>
-              {focused}
+              {lastTouched}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {s.label}
               </div>
               <div style={{ fontSize: 10, opacity: 0.7, fontFamily: T.fontMono, letterSpacing: '0.8px' }}>
-                {c === 0 && <><span style={{ color: T.accent }}>FALTA</span> · {s.sectionName.toUpperCase()}</>}
-                {c === 1 && <><span style={{ color: '#9DD96A' }}>PEGADA</span> · {s.sectionName.toUpperCase()}</>}
-                {c >= 2  && <><span style={{ color: '#9DD96A' }}>PEGADA</span> + <span style={{ color: T.accent }}>{c - 1} PARA CAMBIAR</span></>}
+                {c === 0 && <><span style={{ color: T.accent }}>FALTA</span> · mantené presionado para restar</>}
+                {c === 1 && <><span style={{ color: '#9DD96A' }}>PEGADA ×1</span> · {s.sectionName.toUpperCase()}</>}
+                {c >= 2  && <><span style={{ color: '#9DD96A' }}>PEGADA ×{c}</span> · <span style={{ color: T.accent }}>{c - 1} PARA CAMBIAR</span></>}
               </div>
             </div>
-            <button onClick={() => dec(focused)} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1.5px solid ${T.paper}`,
-              background: 'transparent', color: T.paper, fontSize: 18, fontWeight: 700,
-            }}>−</button>
-            <button onClick={() => inc(focused)} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1.5px solid ${T.paper}`,
-              background: T.accent, color: '#fff', fontSize: 18, fontWeight: 700,
-            }}>+</button>
           </div>
         );
       })()}
