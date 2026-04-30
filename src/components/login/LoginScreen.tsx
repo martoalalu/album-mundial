@@ -128,7 +128,22 @@ export default function LoginScreen() {
       </form>
 
       <div style={{ flex: 1 }} />
-      <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkSoft, letterSpacing: '1.2px', marginTop: 32, textAlign: 'center' }}>
+
+      <a href="https://docs.google.com/forms/d/1xStKJ-cXEga7Gl6BALUi1aWSYA5T6vh9o4EQE46YOP0/edit"
+        target="_blank" rel="noopener noreferrer"
+        style={{
+          marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '14px 16px',
+          background: T.surface, border: `1.5px dashed ${T.line}`, borderRadius: 10,
+          textDecoration: 'none', color: T.ink,
+        }}>
+        <span style={{ fontSize: 14 }}>
+          <span style={{ color: T.inkDim }}>¿Querés tu usuario?</span> <strong>Completá este form</strong>
+        </span>
+        <span style={{ fontFamily: T.fontMono, color: T.inkDim }}>→</span>
+      </a>
+
+      <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkSoft, letterSpacing: '1.2px', marginTop: 20, textAlign: 'center' }}>
         ★ SOLO PARA LA BARRA ★
       </div>
     </div>
