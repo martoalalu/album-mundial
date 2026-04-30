@@ -8,6 +8,7 @@ type CollectionCtx = {
   collection: Collection;
   inc: (n: number) => void;
   dec: (n: number) => void;
+  setMany: (entries: { n: number; count: number }[]) => void;
   hydrated: boolean;
   userId: string;
   groupId: string;
@@ -68,8 +69,21 @@ export function CollectionProvider({
     });
   }, [userId]);
 
+  const setMany = useCallback((entries: { n: number; count: number }[]) => {
+    setCollection((prev) => {
+      const next = { ...prev };
+      for (const { n, count } of entries) next[n] = count;
+      const supabase = createClient();
+      const now = new Date().toISOString();
+      supabase.from('collections').upsert(
+        entries.map(({ n, count }) => ({ user_id: userId, sticker_n: n, count, updated_at: now }))
+      );
+      return next;
+    });
+  }, [userId]);
+
   return (
-    <Ctx.Provider value={{ collection, inc, dec, hydrated, userId, groupId, displayName }}>
+    <Ctx.Provider value={{ collection, inc, dec, setMany, hydrated, userId, groupId, displayName }}>
       {children}
     </Ctx.Provider>
   );

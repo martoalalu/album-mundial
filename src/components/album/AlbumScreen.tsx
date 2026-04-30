@@ -200,7 +200,7 @@ function StickerCard({
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AlbumScreen() {
-  const { collection, inc, dec, displayName } = useCollection();
+  const { collection, inc, dec, setMany, displayName } = useCollection();
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [lastTouched, setLastTouched] = useState<number | null>(null);
@@ -351,20 +351,26 @@ export default function AlbumScreen() {
                     <path d="M1 1l4 4 4-4" />
                   </svg>
                 </div>
-                {complete && (
-                  <div style={{
-                    position: 'absolute', top: -8, right: 36,
-                    background: T.ok, color: '#fff',
-                    fontFamily: T.fontMono, fontSize: 9, fontWeight: 800, letterSpacing: 1,
-                    padding: '2px 7px', borderRadius: 4, border: `1.5px solid ${T.ink}`,
-                    transform: 'rotate(-3deg)',
-                  }}>COMPLETO</div>
-                )}
               </button>
 
               {!isCollapsed && (
+                <div style={{ padding: '0 16px 6px' }}>
+                  <button
+                    onClick={() => setMany(sec.stickers.map((s) => ({
+                      n: s.n,
+                      count: complete ? 0 : Math.max(collection[s.n] ?? 0, 1),
+                    })))}
+                    style={{
+                      width: '100%', padding: '8px 12px', marginBottom: 10,
+                      background: complete ? T.ok : T.surface,
+                      color: complete ? '#fff' : T.inkDim,
+                      border: `1.5px solid ${complete ? T.ok : T.line}`,
+                      borderRadius: 8, fontFamily: T.fontMono, fontSize: 10,
+                      fontWeight: 700, letterSpacing: '0.8px', cursor: 'pointer',
+                    }}>
+                    {complete ? '✓ SECCIÓN COMPLETA · DESMARCAR TODO' : '+ MARCAR SECCIÓN COMPLETA'}
+                  </button>
                 <div style={{
-                  padding: '4px 16px 6px',
                   display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, justifyItems: 'center',
                 }}>
                   {sec.items.map((s) => (
@@ -375,6 +381,7 @@ export default function AlbumScreen() {
                       onTouch={() => handleTouch(s.n)}
                     />
                   ))}
+                </div>
                 </div>
               )}
             </div>
