@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCollection } from '@/lib/store';
 import { computeStats, FilterType } from '@/lib/match';
-import { SECTIONS, STICKERS, Sticker } from '@/lib/stickers';
+import { SECTIONS, STICKERS, Sticker, WC_GROUPS } from '@/lib/stickers';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { T } from '@/lib/tokens';
@@ -203,6 +203,7 @@ export default function AlbumScreen() {
   const { collection, inc, dec, setMany, displayName } = useCollection();
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'alpha' | 'group'>('alpha');
   const [lastTouched, setLastTouched] = useState<number | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
@@ -231,30 +232,32 @@ export default function AlbumScreen() {
 
   const filteredSections = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return SECTIONS.map((sec) => {
+    const sections = SECTIONS.map((sec) => {
       let items = sec.stickers;
-
       if (filter === 'have')    items = items.filter((s) => (collection[s.n] ?? 0) >= 1);
       if (filter === 'missing') items = items.filter((s) => (collection[s.n] ?? 0) === 0);
       if (filter === 'dupes')   items = items.filter((s) => (collection[s.n] ?? 0) >= 2);
-
-      if (q) {
-        items = items.filter((s) =>
-          String(s.n).includes(q) ||
-          s.sectionId.toLowerCase().includes(q) ||
-          s.sectionName.toLowerCase().includes(q)
-        );
-      }
-
+      if (q) items = items.filter((s) =>
+        String(s.n).includes(q) || s.sectionId.toLowerCase().includes(q) || s.sectionName.toLowerCase().includes(q)
+      );
       return { ...sec, items };
-    })
-    .filter((sec) => sec.items.length > 0)
-    .sort((a, b) => {
+    }).filter((sec) => sec.items.length > 0);
+
+    if (viewMode === 'group') {
+      return sections.sort((a, b) => {
+        if (a.wcGroup === '-') return 1;
+        if (b.wcGroup === '-') return -1;
+        if (a.wcGroup !== b.wcGroup) return a.wcGroup.localeCompare(b.wcGroup);
+        return WC_GROUPS.indexOf(a.wcGroup as any) - WC_GROUPS.indexOf(b.wcGroup as any);
+      });
+    }
+
+    return sections.sort((a, b) => {
       if (a.id === 'GEN') return 1;
       if (b.id === 'GEN') return -1;
       return a.name.localeCompare(b.name, 'es');
     });
-  }, [filter, search, collection]);
+  }, [filter, search, collection, viewMode]);
 
   return (
     <div style={{ height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -285,16 +288,35 @@ export default function AlbumScreen() {
         total={stats.total} owned={stats.pegadas} missing={stats.faltan} dupes={stats.sobran}
       />
 
-      {/* Expand/collapse all */}
-      <div style={{ padding: '0 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: T.fontMono }}>
-        <div style={{ fontSize: 10, color: T.inkDim, letterSpacing: 1, fontWeight: 700 }}>
-          {filteredSections.length} {filteredSections.length === 1 ? 'SECCIÓN' : 'SECCIONES'}
-          {search.trim() && ` · "${search.trim()}"`}
+      {/* Vista toggle + expand/collapse */}
+      <div style={{ padding: '0 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        {/* Toggle vista */}
+        <div style={{ display: 'flex', gap: 4 }}>
+          {(['alpha', 'group'] as const).map((mode) => {
+            const active = viewMode === mode;
+            return (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{
+                fontFamily: T.fontMono, fontSize: 9, fontWeight: 700, letterSpacing: '0.8px',
+                padding: '4px 8px', borderRadius: 6,
+                border: `1.5px solid ${active ? T.ink : T.line}`,
+                background: active ? T.ink : 'transparent',
+                color: active ? T.paper : T.inkDim,
+                cursor: 'pointer',
+              }}>
+                {mode === 'alpha' ? 'A-Z' : 'GRUPOS'}
+              </button>
+            );
+          })}
         </div>
-        <button onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(SECTIONS.map((s) => s.id)))}
-          style={{ border: 'none', background: 'transparent', fontFamily: T.fontMono, fontSize: 10, fontWeight: 700, letterSpacing: 1, color: T.accent, padding: '4px 6px' }}>
-          {allCollapsed ? 'ABRIR TODAS ↓' : 'CERRAR TODAS ↑'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkDim, letterSpacing: 1, fontWeight: 700 }}>
+            {filteredSections.length} {filteredSections.length === 1 ? 'SECCIÓN' : 'SECCIONES'}
+          </div>
+          <button onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(SECTIONS.map((s) => s.id)))}
+            style={{ border: 'none', background: 'transparent', fontFamily: T.fontMono, fontSize: 10, fontWeight: 700, letterSpacing: 1, color: T.accent, padding: '4px 6px' }}>
+            {allCollapsed ? '↓' : '↑'}
+          </button>
+        </div>
       </div>
 
       {/* Sections */}
@@ -304,7 +326,10 @@ export default function AlbumScreen() {
             NADA QUE MOSTRAR
           </div>
         )}
-        {filteredSections.map((sec) => {
+        {filteredSections.map((sec, idx) => {
+          const prevSec = filteredSections[idx - 1];
+          const showGroupHeader = viewMode === 'group' && sec.wcGroup !== '-' &&
+            (!prevSec || prevSec.wcGroup !== sec.wcGroup);
           const owned = sec.stickers.filter((s) => (collection[s.n] ?? 0) >= 1).length;
           const total = sec.stickers.length;
           const complete = owned === total;
@@ -313,7 +338,24 @@ export default function AlbumScreen() {
           const pct = Math.round((owned / total) * 100);
 
           return (
-            <div key={sec.id} style={{ marginBottom: 14 }}>
+            <div key={sec.id}>
+              {showGroupHeader && (
+                <div style={{
+                  margin: '4px 16px 8px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <div style={{
+                    fontFamily: T.fontMono, fontSize: 11, fontWeight: 800, letterSpacing: '1px',
+                    color: T.paper, background: T.ink,
+                    padding: '4px 12px', borderRadius: 6,
+                  }}>
+                    GRUPO {sec.wcGroup}
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: T.line }} />
+                </div>
+              )}
+
+              <div style={{ marginBottom: 14 }}>
               <button onClick={() => toggleSection(sec.id)} style={{
                 width: 'calc(100% - 32px)', margin: '0 16px 10px',
                 padding: '10px 12px', background: sec.color, color: '#fff',
@@ -384,6 +426,7 @@ export default function AlbumScreen() {
                 </div>
                 </div>
               )}
+              </div>
             </div>
           );
         })}
