@@ -108,10 +108,11 @@ function FilterPills({
 
 // ─── Sticker card ─────────────────────────────────────────────────────────────
 function StickerCard({
-  s, count, onInc, onDec, onTouch,
+  s, count, onInc, onDec, onTouch, fill = false, tall = false,
 }: {
   s: Sticker; count: number;
   onInc: () => void; onDec: () => void; onTouch: () => void;
+  fill?: boolean; tall?: boolean;
 }) {
   const has = count >= 1;
   const dupe = count >= 2;
@@ -142,6 +143,12 @@ function StickerCard({
     onTouch();
   }
 
+  const w = fill ? '100%' : 70;
+  const h = tall ? 128 : 96;
+  const fontSize = tall ? 14 : 11;
+  const barH = tall ? 18 : 14;
+  const labelSize = tall ? 10 : 9;
+
   return (
     <div
       onPointerDown={handlePointerDown}
@@ -149,7 +156,7 @@ function StickerCard({
       onPointerLeave={handlePointerUp}
       onClick={handleClick}
       style={{
-        position: 'relative', width: 70, height: 96,
+        position: 'relative', width: w, height: h,
         background: has ? T.surface : 'transparent',
         border: `1.5px ${has ? 'solid' : 'dashed'} ${pressing ? T.accent : (has ? T.ink : T.line)}`,
         borderRadius: 8,
@@ -160,7 +167,7 @@ function StickerCard({
         transition: 'transform .1s, box-shadow .1s, border-color .1s',
       }}>
       <div style={{
-        height: 14, background: has ? s.sectionColor : 'transparent', opacity: has ? 1 : 0.25,
+        height: barH, background: has ? s.sectionColor : 'transparent', opacity: has ? 1 : 0.25,
         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4,
       }}>
         <span style={{ fontSize: 9, lineHeight: 1 }}>
@@ -168,7 +175,7 @@ function StickerCard({
         </span>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>
-        <span style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 800, color: has ? T.ink : T.inkSoft, letterSpacing: -0.5, lineHeight: 1, textAlign: 'center' }}>
+        <span style={{ fontFamily: T.fontMono, fontSize, fontWeight: 800, color: has ? T.ink : T.inkSoft, letterSpacing: -0.5, lineHeight: 1, textAlign: 'center' }}>
           {s.displayN}
         </span>
       </div>
@@ -177,7 +184,7 @@ function StickerCard({
         borderTop: has ? `1px dashed ${T.line}` : 'none',
         padding: '2px 4px', textAlign: 'center',
       }}>
-        <div style={{ fontFamily: T.fontMono, fontSize: 9, fontWeight: 600, color: has ? T.inkDim : T.inkSoft, letterSpacing: '0.4px' }}>
+        <div style={{ fontFamily: T.fontMono, fontSize: labelSize, fontWeight: 600, color: has ? T.inkDim : T.inkSoft, letterSpacing: '0.4px' }}>
           {has ? (s.kind === 'general' ? '★' : `·${(s.label.split(' ').pop() || '').slice(0, 6).toUpperCase()}·`) : 'FALTA'}
         </div>
       </div>
@@ -194,6 +201,83 @@ function StickerCard({
           +{count - 1}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Album team layout (2 hojas) ─────────────────────────────────────────────
+function AlbumTeamLayout({
+  sec, collection, onInc, onDec, onTouch,
+}: {
+  sec: { stickers: Sticker[]; name: string; color: string };
+  collection: Record<number, number>;
+  onInc: (n: number) => void;
+  onDec: (n: number) => void;
+  onTouch: (n: number) => void;
+}) {
+  const stickers = sec.stickers;
+  const escudo = stickers[0];
+  const fotoGrupal = stickers[1];
+  const j = stickers.slice(2); // j[0]=J1 … j[17]=J18
+
+  const card = (s: Sticker, fill = false) => (
+    <StickerCard
+      key={s.n} s={s}
+      count={collection[s.n] ?? 0}
+      onInc={() => onInc(s.n)} onDec={() => onDec(s.n)} onTouch={() => onTouch(s.n)}
+      fill={fill}
+    />
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Hoja 1 */}
+      {/* F1: texto izq (2 cols) + Escudo + J1 (der, tamaño normal) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignItems: 'center' }}>
+        <div style={{ gridColumn: 'span 2', paddingLeft: 2 }}>
+          <div style={{ fontFamily: T.font, fontSize: 10, fontWeight: 800, letterSpacing: '2px', color: T.inkDim, lineHeight: 1, textTransform: 'uppercase' }}>
+            We are
+          </div>
+          <div style={{ fontFamily: T.font, fontSize: 16, fontWeight: 900, letterSpacing: '-0.5px', color: sec.color, lineHeight: 1.1, marginTop: 3, textTransform: 'uppercase' }}>
+            {sec.name}
+          </div>
+        </div>
+        {card(escudo)}
+        {card(j[0])}
+      </div>
+      {/* F2: J2–J5 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
+        {j.slice(1, 5).map(s => card(s))}
+      </div>
+      {/* F3: J6–J9 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
+        {j.slice(5, 9).map(s => card(s))}
+      </div>
+
+      {/* Divisor */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
+        <div style={{ flex: 1, height: 1, background: T.line }} />
+        <span style={{ fontFamily: T.fontMono, fontSize: 8, letterSpacing: '1.2px', color: T.inkSoft }}>HOJA 2</span>
+        <div style={{ flex: 1, height: 1, background: T.line }} />
+      </div>
+
+      {/* Hoja 2 */}
+      {/* F4: J10 + J11 + Foto grupal (wide, span 2 cols) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
+        {card(j[9])}
+        {card(j[10])}
+        <div style={{ gridColumn: 'span 2', width: '100%' }}>
+          {card(fotoGrupal, true)}
+        </div>
+      </div>
+      {/* F5: J12–J15 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
+        {j.slice(11, 15).map(s => card(s))}
+      </div>
+      {/* F6: J16–J18, left-aligned */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {j.slice(15, 18).map(s => card(s))}
+      </div>
     </div>
   );
 }
@@ -412,18 +496,26 @@ export default function AlbumScreen() {
                     }}>
                     {complete ? '✓ SECCIÓN COMPLETA · DESMARCAR TODO' : '+ MARCAR SECCIÓN COMPLETA'}
                   </button>
-                <div style={{
-                  display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, justifyItems: 'center',
-                }}>
-                  {sec.items.map((s) => (
-                    <StickerCard
-                      key={s.n} s={s} count={collection[s.n] ?? 0}
-                      onInc={() => inc(s.n)}
-                      onDec={() => dec(s.n)}
-                      onTouch={() => handleTouch(s.n)}
+                  {sec.kind === 'team' && filter === 'all' && !search.trim() ? (
+                    <AlbumTeamLayout
+                      sec={{ stickers: sec.stickers, name: sec.name, color: sec.color }}
+                      collection={collection}
+                      onInc={inc} onDec={dec} onTouch={handleTouch}
                     />
-                  ))}
-                </div>
+                  ) : (
+                    <div style={{
+                      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, justifyItems: 'center',
+                    }}>
+                      {sec.items.map((s) => (
+                        <StickerCard
+                          key={s.n} s={s} count={collection[s.n] ?? 0}
+                          onInc={() => inc(s.n)}
+                          onDec={() => dec(s.n)}
+                          onTouch={() => handleTouch(s.n)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               </div>
