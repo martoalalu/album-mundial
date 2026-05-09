@@ -215,16 +215,13 @@ function AlbumTeamLayout({
   onDec: (n: number) => void;
   onTouch: (n: number) => void;
 }) {
-  const stickers = sec.stickers;
-  const escudo = stickers[0];
-  const fotoGrupal = stickers[1];
-  const j = stickers.slice(2); // j[0]=J1 … j[17]=J18
+  const s = sec.stickers; // s[0]=1 … s[19]=20, en orden
 
-  const card = (s: Sticker, fill = false) => (
+  const card = (st: Sticker, fill = false) => (
     <StickerCard
-      key={s.n} s={s}
-      count={collection[s.n] ?? 0}
-      onInc={() => onInc(s.n)} onDec={() => onDec(s.n)} onTouch={() => onTouch(s.n)}
+      key={st.n} s={st}
+      count={collection[st.n] ?? 0}
+      onInc={() => onInc(st.n)} onDec={() => onDec(st.n)} onTouch={() => onTouch(st.n)}
       fill={fill}
     />
   );
@@ -232,7 +229,7 @@ function AlbumTeamLayout({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Hoja 1 */}
-      {/* F1: texto izq (2 cols) + Escudo + J1 (der, tamaño normal) */}
+      {/* F1: texto izq (2 cols) + sticker 1 + sticker 2 (der, tamaño normal) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignItems: 'center' }}>
         <div style={{ gridColumn: 'span 2', paddingLeft: 2 }}>
           <div style={{ fontFamily: T.font, fontSize: 10, fontWeight: 800, letterSpacing: '2px', color: T.inkDim, lineHeight: 1, textTransform: 'uppercase' }}>
@@ -242,16 +239,16 @@ function AlbumTeamLayout({
             {sec.name}
           </div>
         </div>
-        {card(escudo)}
-        {card(j[0])}
+        {card(s[0])}
+        {card(s[1])}
       </div>
-      {/* F2: J2–J5 */}
+      {/* F2: stickers 3–6 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
-        {j.slice(1, 5).map(s => card(s))}
+        {s.slice(2, 6).map(st => card(st))}
       </div>
-      {/* F3: J6–J9 */}
+      {/* F3: stickers 7–10 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
-        {j.slice(5, 9).map(s => card(s))}
+        {s.slice(6, 10).map(st => card(st))}
       </div>
 
       {/* Divisor */}
@@ -262,21 +259,21 @@ function AlbumTeamLayout({
       </div>
 
       {/* Hoja 2 */}
-      {/* F4: J10 + J11 + Foto grupal (wide, span 2 cols) */}
+      {/* F4: stickers 11 + 12 + 13 (wide) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
-        {card(j[9])}
-        {card(j[10])}
+        {card(s[10])}
+        {card(s[11])}
         <div style={{ gridColumn: 'span 2', width: '100%' }}>
-          {card(fotoGrupal, true)}
+          {card(s[12], true)}
         </div>
       </div>
-      {/* F5: J12–J15 */}
+      {/* F5: stickers 14–17 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
-        {j.slice(11, 15).map(s => card(s))}
+        {s.slice(13, 17).map(st => card(st))}
       </div>
-      {/* F6: J16–J18, left-aligned */}
+      {/* F6: stickers 18–20, left-aligned */}
       <div style={{ display: 'flex', gap: 8 }}>
-        {j.slice(15, 18).map(s => card(s))}
+        {s.slice(17, 20).map(st => card(st))}
       </div>
     </div>
   );
