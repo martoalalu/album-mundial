@@ -5,26 +5,25 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { T } from '@/lib/tokens';
 
+type Mode = 'login' | 'guest-name';
+
 export default function LoginScreen() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [guestName, setGuestName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(true);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
     setLoading(true);
     setError('');
-
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
       setError('Mail o contraseña incorrectos.');
@@ -34,6 +33,16 @@ export default function LoginScreen() {
     }
   }
 
+  function handleGuestSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const name = guestName.trim();
+    if (!name) return;
+    const year = 60 * 60 * 24 * 365;
+    document.cookie = `album_guest=${encodeURIComponent(name)}; path=/; max-age=${year}`;
+    router.push('/album');
+    router.refresh();
+  }
+
   return (
     <div style={{
       minHeight: '100%', padding: '40px 24px 24px',
@@ -41,7 +50,7 @@ export default function LoginScreen() {
       background: T.bg, fontFamily: T.font, color: T.ink,
     }}>
 
-      {/* Modal */}
+      {/* Modal explicativo */}
       {showModal && (
         <div onClick={() => setShowModal(false)} style={{
           position: 'fixed', inset: 0, zIndex: 100,
@@ -81,6 +90,7 @@ export default function LoginScreen() {
           </div>
         </div>
       )}
+
       {/* Tapa del álbum */}
       <div style={{
         background: T.ink, color: T.paper,
@@ -118,78 +128,147 @@ export default function LoginScreen() {
         </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, marginBottom: 4 }}>
-          ¡Hola, coleccionista!
-        </div>
-        <div style={{ fontSize: 14, color: T.inkDim }}>
-          Ingresá con el mail y la contraseña que te pasaron.
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
-            Email
-          </span>
-          <input
-            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="tumail@ejemplo.com" required autoComplete="email"
-            style={{
-              height: 48, padding: '0 14px',
-              border: `1.5px solid ${T.ink}`, background: T.surface,
-              borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
-            }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
-            Contraseña
-          </span>
-          <input
-            type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-            required autoComplete="current-password"
-            style={{
-              height: 48, padding: '0 14px',
-              border: `1.5px solid ${T.ink}`, background: T.surface,
-              borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
-            }}
-          />
-        </label>
-
-        {error && (
-          <div style={{ fontSize: 13, color: T.accent, fontFamily: T.fontMono, letterSpacing: '0.4px' }}>
-            {error}
+      {/* ── Modo: nombre de invitado ── */}
+      {mode === 'guest-name' && (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            <button onClick={() => { setMode('login'); setError(''); }} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: T.fontMono, fontSize: 10, letterSpacing: '1px',
+              color: T.inkDim, padding: '0 0 12px', display: 'flex', alignItems: 'center', gap: 4,
+            }}>← VOLVER</button>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, marginBottom: 4 }}>
+              ¿De quién es este álbum?
+            </div>
+            <div style={{ fontSize: 14, color: T.inkDim }}>
+              Tu nombre va a aparecer en el título. Los datos se guardan en este dispositivo.
+            </div>
           </div>
-        )}
+          <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
+                Tu nombre
+              </span>
+              <input
+                autoFocus
+                type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)}
+                placeholder="ej: Martín"
+                style={{
+                  height: 48, padding: '0 14px',
+                  border: `1.5px solid ${T.ink}`, background: T.surface,
+                  borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
+                }}
+              />
+            </label>
+            <button type="submit" disabled={!guestName.trim()} style={{
+              marginTop: 10, height: 54,
+              border: `1.5px solid ${T.ink}`,
+              background: guestName.trim() ? T.ink : T.inkSoft, color: T.paper,
+              borderRadius: 10, fontSize: 16, fontWeight: 700,
+              cursor: guestName.trim() ? 'pointer' : 'not-allowed',
+              boxShadow: guestName.trim() ? `3px 3px 0 ${T.accent}` : 'none',
+            }}>
+              Abrir mi álbum →
+            </button>
+          </form>
+        </>
+      )}
 
-        <button type="submit" disabled={loading} style={{
-          marginTop: 10, height: 54,
-          border: `1.5px solid ${T.ink}`,
-          background: loading ? T.inkDim : T.accent, color: '#fff',
-          borderRadius: 10, fontSize: 16, fontWeight: 700,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          boxShadow: `3px 3px 0 ${T.ink}`,
-        }}>
-          {loading ? 'Entrando...' : 'Entrar →'}
-        </button>
-      </form>
+      {/* ── Modo: login con cuenta ── */}
+      {mode === 'login' && (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, marginBottom: 4 }}>
+              ¡Hola, coleccionista!
+            </div>
+            <div style={{ fontSize: 14, color: T.inkDim }}>
+              Ingresá con tu cuenta o probá como invitado.
+            </div>
+          </div>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
+                Email
+              </span>
+              <input
+                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="tumail@ejemplo.com" autoComplete="email"
+                style={{
+                  height: 48, padding: '0 14px',
+                  border: `1.5px solid ${T.ink}`, background: T.surface,
+                  borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
+                }}
+              />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontFamily: T.fontMono, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: T.inkDim }}>
+                Contraseña
+              </span>
+              <input
+                type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  height: 48, padding: '0 14px',
+                  border: `1.5px solid ${T.ink}`, background: T.surface,
+                  borderRadius: 10, fontSize: 16, outline: 'none', color: T.ink,
+                }}
+              />
+            </label>
+
+            {error && (
+              <div style={{ fontSize: 13, color: T.accent, fontFamily: T.fontMono, letterSpacing: '0.4px' }}>
+                {error}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} style={{
+              marginTop: 10, height: 54,
+              border: `1.5px solid ${T.ink}`,
+              background: loading ? T.inkDim : T.accent, color: '#fff',
+              borderRadius: 10, fontSize: 16, fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: `3px 3px 0 ${T.ink}`,
+            }}>
+              {loading ? 'Entrando...' : 'Entrar →'}
+            </button>
+          </form>
+
+          {/* Separador */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: T.line }} />
+            <span style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkSoft, letterSpacing: '1px' }}>O</span>
+            <div style={{ flex: 1, height: 1, background: T.line }} />
+          </div>
+
+          <button onClick={() => { setMode('guest-name'); setError(''); }} style={{
+            height: 54, border: `1.5px solid ${T.ink}`,
+            background: T.surface, color: T.ink,
+            borderRadius: 10, fontSize: 16, fontWeight: 700,
+            cursor: 'pointer', boxShadow: `3px 3px 0 ${T.line}`,
+          }}>
+            Entrar como invitado
+          </button>
+        </>
+      )}
 
       <div style={{ flex: 1 }} />
 
-      <a href="https://docs.google.com/forms/d/1xStKJ-cXEga7Gl6BALUi1aWSYA5T6vh9o4EQE46YOP0/edit"
-        target="_blank" rel="noopener noreferrer"
-        style={{
-          marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '14px 16px',
-          background: T.surface, border: `1.5px dashed ${T.line}`, borderRadius: 10,
-          textDecoration: 'none', color: T.ink,
-        }}>
-        <span style={{ fontSize: 14 }}>
-          <span style={{ color: T.inkDim }}>¿Querés tu usuario?</span> <strong>Completá este form</strong>
-        </span>
-        <span style={{ fontFamily: T.fontMono, color: T.inkDim }}>→</span>
-      </a>
+      {mode === 'login' && (
+        <a href="https://docs.google.com/forms/d/1xStKJ-cXEga7Gl6BALUi1aWSYA5T6vh9o4EQE46YOP0/edit"
+          target="_blank" rel="noopener noreferrer"
+          style={{
+            marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '14px 16px',
+            background: T.surface, border: `1.5px dashed ${T.line}`, borderRadius: 10,
+            textDecoration: 'none', color: T.ink,
+          }}>
+          <span style={{ fontSize: 14 }}>
+            <span style={{ color: T.inkDim }}>¿Querés tu usuario?</span> <strong>Completá este form</strong>
+          </span>
+          <span style={{ fontFamily: T.fontMono, color: T.inkDim }}>→</span>
+        </a>
+      )}
 
       <div style={{ fontFamily: T.fontMono, fontSize: 10, color: T.inkSoft, letterSpacing: '1.2px', marginTop: 20, textAlign: 'center' }}>
         ★ SOLO PARA LA BARRA ★

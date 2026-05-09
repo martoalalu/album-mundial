@@ -9,11 +9,17 @@ import { useRouter } from 'next/navigation';
 import { T } from '@/lib/tokens';
 
 // ─── Header ──────────────────────────────────────────────────────────────────
-function Header({ owned, total, displayName }: { owned: number; total: number; displayName: string }) {
+function Header({ owned, total, displayName, isGuest }: { owned: number; total: number; displayName: string; isGuest: boolean }) {
   const router = useRouter();
   const pct = Math.round((owned / total) * 100);
 
   async function handleLogout() {
+    if (isGuest) {
+      document.cookie = 'album_guest=; path=/; max-age=0';
+      router.push('/login');
+      router.refresh();
+      return;
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
@@ -311,7 +317,7 @@ function AlbumTeamLayout({
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AlbumScreen() {
-  const { collection, inc, dec, setMany, displayName } = useCollection();
+  const { collection, inc, dec, setMany, displayName, isGuest } = useCollection();
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'alpha' | 'group'>('alpha');
@@ -372,7 +378,7 @@ export default function AlbumScreen() {
 
   return (
     <div style={{ height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-      <Header owned={stats.pegadas} total={stats.total} displayName={displayName} />
+      <Header owned={stats.pegadas} total={stats.total} displayName={displayName} isGuest={isGuest} />
 
       {/* Search */}
       <div style={{ padding: '0 16px 10px', position: 'sticky', top: 88, background: T.bg, zIndex: 25 }}>

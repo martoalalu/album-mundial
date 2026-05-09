@@ -13,6 +13,7 @@ type CollectionCtx = {
   userId: string;
   groupId: string;
   displayName: string;
+  isGuest: boolean;
 };
 
 const Ctx = createContext<CollectionCtx | null>(null);
@@ -83,7 +84,58 @@ export function CollectionProvider({
   }, [userId]);
 
   return (
-    <Ctx.Provider value={{ collection, inc, dec, setMany, hydrated, userId, groupId, displayName }}>
+    <Ctx.Provider value={{ collection, inc, dec, setMany, hydrated, userId, groupId, displayName, isGuest: false }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+// ─── Guest provider (localStorage) ───────────────────────────────────────────
+const GUEST_KEY = 'album_guest_collection';
+
+export function GuestCollectionProvider({ children, displayName }: { children: React.ReactNode; displayName: string }) {
+  const [collection, setCollection] = useState<Collection>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(GUEST_KEY);
+      if (saved) setCollection(JSON.parse(saved));
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  function persist(col: Collection) {
+    try { localStorage.setItem(GUEST_KEY, JSON.stringify(col)); } catch {}
+  }
+
+  const inc = useCallback((n: number) => {
+    setCollection((prev) => {
+      const next = { ...prev, [n]: Math.min((prev[n] ?? 0) + 1, 9) };
+      persist(next);
+      return next;
+    });
+  }, []);
+
+  const dec = useCallback((n: number) => {
+    setCollection((prev) => {
+      const next = { ...prev, [n]: Math.max((prev[n] ?? 0) - 1, 0) };
+      persist(next);
+      return next;
+    });
+  }, []);
+
+  const setMany = useCallback((entries: { n: number; count: number }[]) => {
+    setCollection((prev) => {
+      const next = { ...prev };
+      for (const { n, count } of entries) next[n] = count;
+      persist(next);
+      return next;
+    });
+  }, []);
+
+  return (
+    <Ctx.Provider value={{ collection, inc, dec, setMany, hydrated, userId: 'guest', groupId: '', displayName, isGuest: true }}>
       {children}
     </Ctx.Provider>
   );

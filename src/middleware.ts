@@ -25,12 +25,13 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isPublic = pathname.startsWith('/login') || pathname.startsWith('/auth');
+  const isGuest = !!request.cookies.get('album_guest')?.value;
 
-  if (!user && !isPublic) {
+  if (!user && !isGuest && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (user && pathname === '/login') {
+  if ((user || isGuest) && pathname === '/login') {
     return NextResponse.redirect(new URL('/album', request.url));
   }
 
