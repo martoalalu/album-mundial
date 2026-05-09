@@ -96,7 +96,10 @@ function buildStickers(): Sticker[] {
   for (const team of TEAMS) {
     for (let i = 0; i < 20; i++) {
       const label =
-        i === 0 ? "Escudo" : i === 1 ? "Foto grupal" : `Jugador ${i - 1}`;
+        i === 0 ? "Escudo"
+        : i === 12 ? "Foto grupal"
+        : i < 12 ? `Jugador ${i}`
+        : `Jugador ${i - 1}`;
       list.push({
         n,
         displayN: `${team.code}-${i + 1}`,

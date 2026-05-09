@@ -174,8 +174,38 @@ function StickerCard({
           {s.sectionFlag}
         </span>
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>
-        <span style={{ fontFamily: T.fontMono, fontSize, fontWeight: 800, color: has ? T.ink : T.inkSoft, letterSpacing: -0.5, lineHeight: 1, textAlign: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2px 2px 0', gap: 2 }}>
+        {has && s.label === 'Escudo' && (
+          <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+            <path d="M13 2L24 6.5V14C24 20.5 19 25.5 13 27C7 25.5 2 20.5 2 14V6.5L13 2Z"
+              fill={s.sectionColor} fillOpacity="0.22" stroke={s.sectionColor} strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M13 7L17 10V13.5C17 16.5 15 18.5 13 19.5C11 18.5 9 16.5 9 13.5V10L13 7Z"
+              fill={s.sectionColor} fillOpacity="0.5"/>
+          </svg>
+        )}
+        {has && s.label === 'Foto grupal' && (
+          <svg width={fill ? 44 : 36} height="24" viewBox="0 0 44 24" fill="none">
+            <circle cx="22" cy="21" r="2.2" fill={s.sectionColor} fillOpacity="0.8"/>
+            <circle cx="8"  cy="15" r="1.8" fill={s.sectionColor} fillOpacity="0.65"/>
+            <circle cx="16" cy="15" r="1.8" fill={s.sectionColor} fillOpacity="0.65"/>
+            <circle cx="28" cy="15" r="1.8" fill={s.sectionColor} fillOpacity="0.65"/>
+            <circle cx="36" cy="15" r="1.8" fill={s.sectionColor} fillOpacity="0.65"/>
+            <circle cx="10" cy="9"  r="1.8" fill={s.sectionColor} fillOpacity="0.5"/>
+            <circle cx="18" cy="8"  r="1.8" fill={s.sectionColor} fillOpacity="0.5"/>
+            <circle cx="26" cy="8"  r="1.8" fill={s.sectionColor} fillOpacity="0.5"/>
+            <circle cx="34" cy="9"  r="1.8" fill={s.sectionColor} fillOpacity="0.5"/>
+            <circle cx="15" cy="3"  r="1.8" fill={s.sectionColor} fillOpacity="0.35"/>
+            <circle cx="22" cy="2"  r="1.8" fill={s.sectionColor} fillOpacity="0.35"/>
+            <circle cx="29" cy="3"  r="1.8" fill={s.sectionColor} fillOpacity="0.35"/>
+          </svg>
+        )}
+        {has && s.label !== 'Escudo' && s.label !== 'Foto grupal' && (
+          <svg width="20" height="26" viewBox="0 0 20 26" fill="none">
+            <circle cx="10" cy="6" r="4.5" fill={s.sectionColor} fillOpacity="0.55"/>
+            <path d="M1 26C1 18 5 14 10 14C15 14 19 18 19 26" fill={s.sectionColor} fillOpacity="0.35"/>
+          </svg>
+        )}
+        <span style={{ fontFamily: T.fontMono, fontSize: has ? fontSize - 1 : fontSize, fontWeight: 800, color: has ? T.inkDim : T.inkSoft, letterSpacing: -0.5, lineHeight: 1, textAlign: 'center' }}>
           {s.displayN}
         </span>
       </div>
@@ -271,8 +301,8 @@ function AlbumTeamLayout({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, justifyItems: 'center' }}>
         {s.slice(13, 17).map(st => card(st))}
       </div>
-      {/* F6: stickers 18–20, left-aligned */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* F6: stickers 18–20, right-aligned */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         {s.slice(17, 20).map(st => card(st))}
       </div>
     </div>
@@ -493,7 +523,7 @@ export default function AlbumScreen() {
                     }}>
                     {complete ? '✓ SECCIÓN COMPLETA · DESMARCAR TODO' : '+ MARCAR SECCIÓN COMPLETA'}
                   </button>
-                  {sec.kind === 'team' && filter === 'all' && !search.trim() ? (
+                  {sec.kind === 'team' ? (
                     <AlbumTeamLayout
                       sec={{ stickers: sec.stickers, name: sec.name, color: sec.color }}
                       collection={collection}
